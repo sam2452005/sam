@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hand Gesture Scroll</title>
+  <style>
+    body {
+      height: 3000px;
+      font-family: Arial;
+      text-align: center;
+    }
+    video {
+      position: fixed;
+      right: 10px;
+      bottom: 10px;
+      width: 160px;
+      border: 2px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>👋 Hand Gesture Scroll Demo</h1>
+  <p>Move your index finger UP or DOWN to scroll</p>
+
+  <video id="video" autoplay></video>
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+
+  <script>
+    const videoElement = document.getElementById("video");
+
+    let lastY = null;
+
+    const hands = new Hands({
+      locateFile: file => 
+        `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+      maxNumHands: 1,
+      minDetectionConfidence: 0.7,
+      minTrackingConfidence: 0.7
+    });
+
+    hands.onResults(results => {
+      if (results.multiHandLandmarks) {
+        const landmarks = results.multiHandLandmarks[0];
+        const indexFingerTip = landmarks[8]; // index finger tip
+
+        const currentY = indexFingerTip.y;
+
+        if (lastY !== null) {
+          if (currentY < lastY - 0.01) {
+            window.scrollBy(0, -30); // scroll up
+          }
+          if (currentY > lastY + 0.01) {
+            window.scrollBy(0, 30); // scroll down
+          }
+        }
+        lastY = currentY;
+      }
+    });
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => {
+        await hands.send({ image: videoElement });
+      },
+      width: 640,
+      height: 480
+    });
+
+    camera.start();
+  </script>
+</body>
+</html>
